@@ -124,6 +124,7 @@ $(document).ready(function() {
     // End of toggles
 
     // Update statistics
+
     $(document).on('click', '#updateStats', function() {
         if (!$igTools.userStats.loading) {
             updateStats($igTools.userStats.user, 'followers');
@@ -143,7 +144,7 @@ $(document).ready(function() {
             });
         }
     });
-    
+
     function updateStats (user, list, after = null) {
         $igTools.userStats.loading = true;
         $.ajax({
@@ -166,6 +167,55 @@ $(document).ready(function() {
             error: function (error) { console.log(error); $igTools.userStats.loading = false; }
         });
     }
+
     // End of statistics
+
+    // Auto follow function
+
+    function autoFollow () {
+        $.each($igTools.autoFollow.list.users, function (k, v) {
+            // Check for black list
+            setTimeout(function () {
+                $.ajax({
+                    type: 'post',
+                    url: `https://www.instagram.com/web/friendships/${v.node.user.id}/follow/`,
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded',
+                        'x-csrftoken': $igTools.script.config.csrf_token,
+                        'x-instagram-ajax': $igTools.script.rollout_hash
+                    },
+                    data: {},
+                    success: function (response) { console.log(response) },
+                    error: function (error) { console.log(error) }
+                });
+            }, $igTools.autoFollow.timer * (k + 1));
+        });
+    }
+
+    // End of auto follow
+
+    // Auto unfollow function
+
+    function autoUnfollow () {
+        $.each($igTools.userStats.followings, function (k, v) {
+            // Check for white list
+            setTimeout(function () {
+                $.ajax({
+                    type: 'post',
+                    url: `https://www.instagram.com/web/friendships/${v.node.user.id}/unfollow/`,
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded',
+                        'x-csrftoken': $igTools.script.config.csrf_token,
+                        'x-instagram-ajax': $igTools.script.rollout_hash
+                    },
+                    data: {},
+                    success: function (response) { console.log(response) },
+                    error: function (error) { console.log(error) }
+                });
+            }. $igTools.autoUnfollow.timer * (k + 1));
+        });
+    }
+
+    // End of auto unfollow
 
 });
