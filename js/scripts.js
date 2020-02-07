@@ -1,4 +1,7 @@
 $(document).ready(function() {
+
+    // Setting up extension configuration
+
     let $igTools = {
         autoFollow: {
             timer: 60000 / 50,
@@ -36,6 +39,10 @@ $(document).ready(function() {
         loading: false,
         script: null,
     };
+
+    // End of configuration
+
+    // Loading extenstion if current url has instagram.com - will be fixed for some.com/instagram.com
 
     if (window.location.href.includes('instagram.com')) {
         $igTools.script = JSON.parse($('body').html().match(/<script type="text\/javascript">window\._sharedData = (.*)<\/script>/)[1].slice(0, -1));
@@ -98,6 +105,10 @@ $(document).ready(function() {
         });
     }
 
+    // End of loading extension
+
+    // Toggles for popup form and other sections
+
     $(document).on('click', '.toggleTools', function() {
         $('#ig-tools').toggleClass('hidden');
         $('body').toggleClass('no-scroll');
@@ -109,5 +120,32 @@ $(document).ready(function() {
         $('.content > div').removeClass('active');
         $('.content > div[data-section='+$(this).data("section")+']').addClass('active');
     });
+
+    // End of toggles
+
+    // Update statistics
+    function updateStats (user, list, after = null) {
+        $igTools.userStats.loading = true;
+        $.ajax({
+            type: 'get',
+            url: `https://www.instagram.com/graphql/query/?query_hash=${$igTools.hashes[list].h}&variables=${encodeURIComponent(JSON.stringify({
+                "id": user.id,
+                "include_reel": true,
+                "fetch_mutual": true,
+                "first": 50,
+                "after": after
+            }))}`,
+            success: function (response) {
+                $igTools.userStats[list].push(...response.data.user[$igTools.hashes[list].path].edges);
+                if (response.data.user[$igTools.hashes[list].path].page_info.has_next_page) {
+                    updateStats(user, $igTools.hashes[list].h, response.data.user[$igTools.hashes[list].path].page_info.end_cursor);
+                } else {
+                    $igTools.userStats.loading = false;
+                }
+            },
+            error: function (error) { console.log(error); $igTools.userStats.loading = false; }
+        });
+    }
+    // End of statistics
 
 });
