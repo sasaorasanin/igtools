@@ -124,6 +124,26 @@ $(document).ready(function() {
     // End of toggles
 
     // Update statistics
+    $(document).on('click', '#updateStats', function() {
+        if (!$igTools.userStats.loading) {
+            updateStats($igTools.userStats.user, 'followers');
+        }
+        if (!$igTools.userStats.loading) {
+            updateStats($igTools.userStats.user, 'followings');
+        }
+        if (!$igTools.userStats.loading) {
+            let followersIDs = [];
+            $.each($igTools.userStats.followers, function(k, v) {
+                followersIDs.push(v.node.id);
+            });
+            $.each($igTools.userStats.followings, function(l, p) {
+                if (!followersIDs.includes(p.node.id)) {
+                    $igTools.userStats.unfollowers.push(p.node.username);
+                }
+            });
+        }
+    });
+    
     function updateStats (user, list, after = null) {
         $igTools.userStats.loading = true;
         $.ajax({
