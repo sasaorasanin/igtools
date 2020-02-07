@@ -1,3 +1,6 @@
+* {
+    box-sizing: border-box !important;
+}
 #ig-tools {
     width: 100vw;
     height: 100vh;
@@ -103,10 +106,75 @@
 #ig-tools .content > div {
     width: 100%;
     height: auto;
+    box-sizing: border-box;
     overflow: hidden;
     display: none;
 }
 
 #ig-tools .content > div.active {
     display: block;
+}
+
+#ig-tools .content > div > div {
+    display: block;
+}
+
+#ig-tools .users-list {
+    position: relative;
+    width: 24%;
+    box-sizing: border-box;
+    margin: 20px 0.5%;
+    height: 500px;
+    display: block;
+    float: left;
+    border: 1px solid grey;
+    padding: 5px;
+    background-color: #fff;
+    color: #000;
+    overflow: hidden;
+}
+
+#ig-tools .users-list  .list-header {
+    width: 100%;
+    text-align: left;
+    padding: 10px;
+    height: 40px;
+    line-height: 20px;
+    box-sizing: border-box;
+    float:left;
+    overflow: hidden;
+    border-bottom: 1px solid grey;
+}
+
+#ig-tools .users-list > div {
+    display:block;
+    height: 460px;
+    float:left;
+    box-sizing: border-box;
+    overflow: hidden auto;
+}
+#ig-tools .users-list > div > .user {
+    width: 100%;
+    float: left;
+    padding: 5px;
+    box-sizing: border-box;
+    display: block;
+}
+
+#ig-tools .users-list  .user > img {
+    max-width: 30px;
+    max-height: 30px;
+    box-sizing: border-box;
+    width: 30px;
+    height: 30px;
+    float: left;
+}
+
+#ig-tools .users-list  .user > span {
+    float: left;
+    margin-left: 10px;
+}
+
+#ig-tools .users-list  .user > button {
+    float:right;
 }

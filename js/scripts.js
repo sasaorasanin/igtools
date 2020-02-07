@@ -4,7 +4,7 @@ $(document).ready(function() {
 
     let $igTools = {
         autoFollow: {
-            timer: 60000 / 50,
+            timer: 3600000 / 50,
             list: {
                 random: false,
                 from: {
@@ -15,7 +15,7 @@ $(document).ready(function() {
             },
         },
         autoUnfollow: {
-            timer: 60000 / 50,
+            timer: 3600000 / 50,
             skipFollowers: false
         },
         userStats: {
@@ -25,7 +25,13 @@ $(document).ready(function() {
             unfollowers: [],
             unfollowings: [],
             blackList: [],
-            whiteList: []
+            whiteList: [],
+            followersIDs: [],
+            followingsIDs: [],
+            unfollowersIDs: [],
+            unfollowingsIDs: [],
+            blackListIDs: [],
+            whiteListIDs: []
         },
         hashes: {
             followers: {
@@ -51,8 +57,11 @@ $(document).ready(function() {
     }
 
     function appInit () {
-        $igTools = JSON.parse(localStorage.getItem(`IGTools`)) ?? $igTools;
-        localStorage.setItem(`IGToools`, JSON.stringify($igTools));
+        let a = JSON.parse(localStorage.getItem(`IGTools`));
+        $igTools = a != undefined || a != null ? a : $igTools;
+        localStorage.setItem(`IGTools`, JSON.stringify($igTools));
+        console.log($igTools);
+        console.log(a);
         $.ajax({
             type: 'get',
             url: `https://www.instagram.com/${$igTools.script.config.viewer.username}/?__a=1`,
@@ -60,7 +69,7 @@ $(document).ready(function() {
                 $igTools.userStats.user = response.graphql.user;
                 $('body').append(`<div id="ig-tools" class="hidden">
                     <div class="sidebar">
-                        <div class="section" data-section="user-stats">User statistics</div>
+                        <div class="section active" data-section="user-stats">User statistics</div>
                         <div class="section" data-section="auto-follow">Auto follow</div>
                         <div class="section" data-section="auto-unfollow">Auto unfollow</div>
                         <div class="section" data-section="get-stories">Get stories</div>
@@ -70,7 +79,7 @@ $(document).ready(function() {
                         <button class="toggleTools">Hide Tools</button>
                     </div>
                     <div class="content">
-                        <div data-section="user-stats">
+                        <div data-section="user-stats" class="active">
                             <div></div>
                             <button id="updateStats">Update stats</button>
                         </div>
@@ -100,8 +109,6 @@ $(document).ready(function() {
                     </div>
                 </div><button class="toggleTools ig-tools-btn">Show Tools</button>`);
                 loadStats();
-                let list = 'followings';
-                console.log($igTools.hashes[list].h);
             },
             error: function (error) { console.log(error) }
         });
@@ -154,40 +161,98 @@ $(document).ready(function() {
                     }, 1000);
                 } else {
                     setTimeout(function () {
-                        let followersIDs = [];
+                        $igTools.userStats.followersIDs = [];
                         $.each($igTools.userStats.followers, function(k, v) {
-                            followersIDs.push(v.node.id);
+                            $igTools.userStats.followersIDs.push(v.node.id);
                         });
-                        $.each($igTools.userStats.followings, function(l, p) {
-                            if (!followersIDs.includes(p.node.id)) {
-                                $igTools.userStats.unfollowers.push(p.node.username);
-                            }
-                        });
-                        let followingsIDs = [];
                         $.each($igTools.userStats.followings, function(k, v) {
-                            followingsIDs.push(v.node.id);
-                        });
-                        $.each($igTools.userStats.followers, function(l, p) {
-                            if (!followingsIDs.includes(p.node.id)) {
-                                $igTools.userStats.unfollowings.push(p.node.username);
+                            if (!$igTools.userStats.followersIDs.includes(v.node.id)) {
+                                $igTools.userStats.unfollowers.push(v);
+                                $igTools.userStats.unfollowersIDs.push(v.node.id);
                             }
                         });
+                        $igTools.userStats.followingsIDs = [];
+                        $.each($igTools.userStats.followings, function(k, v) {
+                            $igTools.userStats.followingsIDs.push(v.node.id);
+                        });
+                        $.each($igTools.userStats.followers, function(k, v) {
+                            if (!$igTools.userStats.followingsIDs.includes(v.node.id)) {
+                                $igTools.userStats.unfollowings.push(v);
+                                $igTools.userStats.unfollowingsIDs.push(v.node.id);
+                            }
+                        });
+                        localStorage.setItem(`IGTools`, JSON.stringify($igTools));
                         loadStats();
                     }, 1000);
                 }
             },
-            error: function (error) { console.log(error); $igTools.userStats.loading = false; }
+            error: function (error) { console.log(error); }
         });
     }
 
     function loadStats () {
         $('.content > div[data-section="user-stats"] > div').html('');
         $('.content > div[data-section="user-stats"] > div').append(`
-            <p>Followers: ${ $igTools.userStats.followers.length }</p>
-            <p>Followings: ${ $igTools.userStats.followings.length }</p>
-            <p>Unfollowers: ${ $igTools.userStats.unfollowers.length }</p>
-            <p>Unfollowings: ${ $igTools.userStats.unfollowings.length }</p>
+            <div class="users-list">
+                <div class="list-header">Followers: ${ $igTools.userStats.followers.length }</div>
+                <div data-list="followers"></div>
+            </div>
+            <div class="users-list">
+                <div class="list-header">Followings: ${ $igTools.userStats.followings.length }</div>
+                <div data-list="followings"></div>
+            </div>
+            <div class="users-list">
+                <div class="list-header">Unfollowers: ${ $igTools.userStats.unfollowers.length }</div>
+                <div data-list="unfollowers"></div>
+            </div>
+            <div class="users-list">
+                <div class="list-header">Unfollowings: ${ $igTools.userStats.unfollowings.length }</div>
+                <div data-list="unfollowings"></div>
+            </div>
         `);
+        $.each($igTools.userStats.followers, function(k, v) {
+            let action = '<button class="follow-btn" data-id="'+v.node.id+'">Follow</button>';
+            if ($igTools.userStats.followings.includes(v.node.id)) {
+                action = '<button class="unfollow-btn" data-id="'+v.node.id+'">Unfollow</button>';
+            }
+            $('.users-list > div[data-list="followers"]').append(`
+                <div class="user">
+                    <img src="${v.node.profile_pic_url}">
+                    <span>${v.node.username}</span>
+                    ${action}
+                </div>
+            `);
+        });
+        $.each($igTools.userStats.followings, function(k, v) {
+            let action = '<button class="unfollow-btn" data-id="'+v.node.id+'">Unfollow</button>';
+            $('.users-list > div[data-list="followings"]').append(`
+                <div class="user">
+                    <img src="${v.node.profile_pic_url}">
+                    <span>${v.node.username}</span>
+                    ${action}
+                </div>
+            `);
+        });
+        $.each($igTools.userStats.unfollowers, function(k, v) {
+            let action = '<button class="unfollow-btn" data-id="'+v.node.id+'">Unfollow</button>';
+            $('.users-list > div[data-list="unfollowers"]').append(`
+                <div class="user">
+                    <img src="${v.node.profile_pic_url}">
+                    <span>${v.node.username}</span>
+                    ${action}
+                </div>
+            `);
+        });
+        $.each($igTools.userStats.unfollowings, function(k, v) {
+            let action = '<button class="follow-btn" data-id="'+v.node.id+'">Follow</button>';
+            $('.users-list > div[data-list="unfollowings"]').append(`
+                <div class="user">
+                    <img src="${v.node.profile_pic_url}">
+                    <span>${v.node.username}</span>
+                    ${action}
+                </div>
+            `);
+        });
         console.log($igTools.userStats.unfollowers);
         console.log($igTools.userStats.unfollowings);
     }
