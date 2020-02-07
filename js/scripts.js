@@ -23,6 +23,7 @@ $(document).ready(function() {
             followers: [],
             followings: [],
             unfollowers: [],
+            unfollowings: [],
             blackList: [],
             whiteList: []
         },
@@ -70,10 +71,8 @@ $(document).ready(function() {
                     </div>
                     <div class="content">
                         <div data-section="user-stats">
-                            <label>
-                                <span>Action</span>
-                                <button id="updateStats">Update stats</button>
-                            </label>
+                            <div></div>
+                            <button id="updateStats">Update stats</button>
                         </div>
                         <div data-section="get-stories">
                             <p>Coming soon!</p>
@@ -100,6 +99,9 @@ $(document).ready(function() {
                         </div>
                     </div>
                 </div><button class="toggleTools ig-tools-btn">Show Tools</button>`);
+                loadStats();
+                let list = 'followings';
+                console.log($igTools.hashes[list].h);
             },
             error: function (error) { console.log(error) }
         });
@@ -126,26 +128,10 @@ $(document).ready(function() {
     // Update statistics
 
     $(document).on('click', '#updateStats', function() {
-        if (!$igTools.userStats.loading) {
-            updateStats($igTools.userStats.user, 'followers');
-        }
-        if (!$igTools.userStats.loading) {
-            updateStats($igTools.userStats.user, 'followings');
-        }
-        if (!$igTools.userStats.loading) {
-            let followersIDs = [];
-            $.each($igTools.userStats.followers, function(k, v) {
-                followersIDs.push(v.node.id);
-            });
-            $.each($igTools.userStats.followings, function(l, p) {
-                if (!followersIDs.includes(p.node.id)) {
-                    $igTools.userStats.unfollowers.push(p.node.username);
-                }
-            });
-        }
+        updateStats($igTools.userStats.user);
     });
 
-    function updateStats (user, list, after = null) {
+    function updateStats (user, list = 'followers', after = null) {
         $igTools.userStats.loading = true;
         $.ajax({
             type: 'get',
@@ -159,13 +145,51 @@ $(document).ready(function() {
             success: function (response) {
                 $igTools.userStats[list].push(...response.data.user[$igTools.hashes[list].path].edges);
                 if (response.data.user[$igTools.hashes[list].path].page_info.has_next_page) {
-                    updateStats(user, $igTools.hashes[list].h, response.data.user[$igTools.hashes[list].path].page_info.end_cursor);
+                    setTimeout(function () {
+                        updateStats(user, list, response.data.user[$igTools.hashes[list].path].page_info.end_cursor);
+                    }, 1000);
+                } else if(list === 'followers') {
+                    setTimeout(function () {
+                        updateStats($igTools.userStats.user, 'followings');
+                    }, 1000);
                 } else {
-                    $igTools.userStats.loading = false;
+                    setTimeout(function () {
+                        let followersIDs = [];
+                        $.each($igTools.userStats.followers, function(k, v) {
+                            followersIDs.push(v.node.id);
+                        });
+                        $.each($igTools.userStats.followings, function(l, p) {
+                            if (!followersIDs.includes(p.node.id)) {
+                                $igTools.userStats.unfollowers.push(p.node.username);
+                            }
+                        });
+                        let followingsIDs = [];
+                        $.each($igTools.userStats.followings, function(k, v) {
+                            followingsIDs.push(v.node.id);
+                        });
+                        $.each($igTools.userStats.followers, function(l, p) {
+                            if (!followingsIDs.includes(p.node.id)) {
+                                $igTools.userStats.unfollowings.push(p.node.username);
+                            }
+                        });
+                        loadStats();
+                    }, 1000);
                 }
             },
             error: function (error) { console.log(error); $igTools.userStats.loading = false; }
         });
+    }
+
+    function loadStats () {
+        $('.content > div[data-section="user-stats"] > div').html('');
+        $('.content > div[data-section="user-stats"] > div').append(`
+            <p>Followers: ${ $igTools.userStats.followers.length }</p>
+            <p>Followings: ${ $igTools.userStats.followings.length }</p>
+            <p>Unfollowers: ${ $igTools.userStats.unfollowers.length }</p>
+            <p>Unfollowings: ${ $igTools.userStats.unfollowings.length }</p>
+        `);
+        console.log($igTools.userStats.unfollowers);
+        console.log($igTools.userStats.unfollowings);
     }
 
     // End of statistics
