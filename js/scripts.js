@@ -53,7 +53,7 @@ $(document).ready(function() {
 
     if (window.location.href.includes('instagram.com')) {
         $igTools.script = JSON.parse($('body').html().match(/<script type="text\/javascript">window\._sharedData = (.*)<\/script>/)[1].slice(0, -1));
-        setTimeout(function() {appInit();}, 1000);
+        // setTimeout(function() {appInit();}, 1000);
     }
 
     function appInit () {
@@ -118,10 +118,10 @@ $(document).ready(function() {
 
     // Toggles for popup form and other sections
 
-    $(document).on('click', '.toggleTools', function() {
-        $('#ig-tools').toggleClass('hidden');
-        $('body').toggleClass('no-scroll');
-    });
+    // $(document).on('click', '.toggleTools', function() {
+    //     $('#ig-tools').toggleClass('hidden');
+    //     $('body').toggleClass('no-scroll');
+    // });
 
     $(document).on('click', '.section', function() {
         $('.section').removeClass('active');

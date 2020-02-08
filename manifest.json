@@ -14,7 +14,7 @@
         {
             "matches": ["<all_urls>"],
             "js": [
-              "js/jquery.js", "js/scripts.js", "js/vue.js"
+              "js/axios.js", "js/vue.js", "js/scripts.js", "js/app.js"
             ],
             "css": [
               "css/style.css"
