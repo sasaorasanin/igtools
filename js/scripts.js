@@ -59,7 +59,7 @@ $(document).ready(function() {
     function appInit () {
         let a = JSON.parse(localStorage.getItem(`IGTools`));
         $igTools = a != undefined || a != null ? a : $igTools;
-        localStorage.setItem(`IGTools`, JSON.stringify($igTools));
+        setIGTools();
         console.log($igTools);
         console.log(a);
         $.ajax({
@@ -101,10 +101,10 @@ $(document).ready(function() {
                         </div>
                         <div data-section="auto-unfollow">
                             <label>
-                                <span>Enter seconds until unfollow:</span>
+                                <span>Enter seconds until unfollow (under 72 could ban you):</span>
                                 <input class="aigb-setting" value="${$igTools.autoUnfollow.timer / 1000}" placeholder="Enter seconds until unfollow:" data-setting="secondsUntilAction" />
                             </label>
-                            Show black list and Follow list and form to add follow list
+                            <div></div>
                         </div>
                     </div>
                 </div><button class="toggleTools ig-tools-btn">Show Tools</button>`);
@@ -128,6 +128,7 @@ $(document).ready(function() {
         $(this).addClass('active');
         $('.content > div').removeClass('active');
         $('.content > div[data-section='+$(this).data("section")+']').addClass('active');
+        loadUnfollow();
     });
 
     // End of toggles
@@ -135,11 +136,18 @@ $(document).ready(function() {
     // Update statistics
 
     $(document).on('click', '#updateStats', function() {
+        $igTools.userStats.followers = [];
+        $igTools.userStats.followersIDs = [];
+        $igTools.userStats.followings = [];
+        $igTools.userStats.followingsIDs = [];
+        $igTools.userStats.unfollowers = [];
+        $igTools.userStats.unfollowersIDs = [];
+        $igTools.userStats.unfollowings = [];
+        $igTools.userStats.unfollowingsIDs = [];
         updateStats($igTools.userStats.user);
     });
 
     function updateStats (user, list = 'followers', after = null) {
-        $igTools.userStats.loading = true;
         $.ajax({
             type: 'get',
             url: `https://www.instagram.com/graphql/query/?query_hash=${$igTools.hashes[list].h}&variables=${encodeURIComponent(JSON.stringify({
@@ -181,12 +189,49 @@ $(document).ready(function() {
                                 $igTools.userStats.unfollowingsIDs.push(v.node.id);
                             }
                         });
-                        localStorage.setItem(`IGTools`, JSON.stringify($igTools));
+                        setIGTools();
                         loadStats();
                     }, 1000);
                 }
             },
             error: function (error) { console.log(error); }
+        });
+    }
+
+    function loadUnfollow () {
+        $('.content > div[data-section="auto-unfollow"] > div').html('');
+        $('.content > div[data-section="auto-unfollow"] > div').append(`
+            <div class="users-list large">
+                <div class="list-header">Followings: ${ $igTools.userStats.followings.length }</div>
+                <div data-list="followings"></div>
+            </div>
+            <div class="users-list large">
+                <div class="list-header">White list: ${ $igTools.userStats.whiteList.length }</div>
+                <div class="list-header"><input id="igt-whitelist-username" placeholder="Add user to white list by username"><button id="igt-whitelist-add">Add</button></div>
+                <div data-list="whiteList"></div>
+            </div>
+        `);
+        $.each($igTools.userStats.followings, function(k, v) {
+            if (!$igTools.userStats.whiteListIDs.includes(v.node.id)) {
+                let action = '<button class="addwhite-btn" data-id="'+k+'">Add To White</button>';
+                $('.users-list > div[data-list="followings"]').append(`
+                    <div class="user">
+                        <img src="${v.node.profile_pic_url}">
+                        <span>${v.node.username}</span>
+                        ${action}
+                    </div>
+                `);
+            }
+        });
+        $.each($igTools.userStats.whiteList, function(k, v) {
+            let action = '<button class="removewhite-btn" data-id="'+k+'">Remove</button>';
+            $('.users-list > div[data-list="whiteList"]').append(`
+                <div class="user">
+                    <img src="${v.node.profile_pic_url}">
+                    <span>${v.node.username}</span>
+                    ${action}
+                </div>
+            `);
         });
     }
 
@@ -212,8 +257,11 @@ $(document).ready(function() {
         `);
         $.each($igTools.userStats.followers, function(k, v) {
             let action = '<button class="follow-btn" data-id="'+v.node.id+'">Follow</button>';
-            if ($igTools.userStats.followings.includes(v.node.id)) {
+            if ($igTools.userStats.followingsIDs.includes(v.node.id)) {
                 action = '<button class="unfollow-btn" data-id="'+v.node.id+'">Unfollow</button>';
+            }
+            if (v.node.requested_by_viewer) {
+                action = '<button class="unfollow-btn" data-id="'+v.node.id+'">Requested</button>';
             }
             $('.users-list > div[data-list="followers"]').append(`
                 <div class="user">
@@ -235,6 +283,9 @@ $(document).ready(function() {
         });
         $.each($igTools.userStats.unfollowers, function(k, v) {
             let action = '<button class="unfollow-btn" data-id="'+v.node.id+'">Unfollow</button>';
+            if (v.node.requested_by_viewer) {
+                action = '<button class="unfollow-btn" data-id="'+v.node.id+'">Requested</button>';
+            }
             $('.users-list > div[data-list="unfollowers"]').append(`
                 <div class="user">
                     <img src="${v.node.profile_pic_url}">
@@ -245,6 +296,9 @@ $(document).ready(function() {
         });
         $.each($igTools.userStats.unfollowings, function(k, v) {
             let action = '<button class="follow-btn" data-id="'+v.node.id+'">Follow</button>';
+            if (v.node.requested_by_viewer) {
+                action = '<button class="unfollow-btn" data-id="'+v.node.id+'">Requested</button>';
+            }
             $('.users-list > div[data-list="unfollowings"]').append(`
                 <div class="user">
                     <img src="${v.node.profile_pic_url}">
@@ -306,5 +360,37 @@ $(document).ready(function() {
     }
 
     // End of auto unfollow
+
+    // Add to white list by username
+    $(document).on('click', '#igt-whitelist-add', function () {
+        let username = $('#igt-whitelist-username').val();
+        if (username != '') {
+            $.ajax({
+                type: 'get',
+                url: `https://www.instagram.com/${username}/?__a=1`,
+                success: function (response) {
+                    console.log(response);
+                    if ($.isEmptyObject(response)) {
+                        alert(`Enter valid username, "${username}" does not exist!`);
+                    } else {
+                        $igTools.userStats.whiteList.push({node: response.graphql.user});
+                        $igTools.userStats.whiteListIDs.push(response.graphql.user.id);
+                        loadUnfollow();
+                        setIGTools();
+                    }
+                },
+                error: function (error) {
+                    console.log(error);
+                },
+            });
+        }
+    });
+    // End of adding by username to whitelist
+
+    // Set to local storage
+    function setIGTools() {
+        localStorage.setItem(`IGTools`, JSON.stringify($igTools));
+    }
+    // End of setting to local storage
 
 });
