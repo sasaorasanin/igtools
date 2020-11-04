@@ -5,7 +5,6 @@
     "manifest_version": 2,
     "background": {
         "scripts": [
-            "js/jquery.js",
             "js/background.js"
         ],
         "persistent": false
@@ -14,10 +13,10 @@
         {
             "matches": ["<all_urls>"],
             "js": [
-              "js/axios.js", "js/vue.js", "js/vuex.js", "js/app.js"
+              "js/axios.js", "js/vue.js", "js/vuex.js", "js/vuetify.js", "js/app.js"
             ],
             "css": [
-              "css/style.css"
+                "css/bootstrap.css"
             ],
             "run_at": "document_end"
         }
@@ -35,5 +34,8 @@
         "32": "images/img16.png",
         "48": "images/img16.png",
         "128": "images/img16.png"
-    }
+    },
+    "permissions": [
+        "unlimitedStorage"
+    ]
 }

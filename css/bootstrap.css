@@ -1,0 +1,35 @@
+.hidden {
+    display: none !important;
+}
+
+.ig-tools-btn {
+    width: auto;
+    height: auto;
+    position: fixed;
+    z-index: 9999998;
+    box-sizing: border-box;
+    top: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    box-shadow: 0px 3px 10px rgba(0,0,0,.25);
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    border: 0;
+    background: #d6249f;
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%,#d6249f 60%,#285AEB 90%);
+}
+
+.oMwYe { overflow-y: auto; }
+
+td, th { vertical-align: middle !important; padding: 10px !important; text-align: left !important; } 
+
+tbody { height: 500px !important; overflow-y: auto !important; }
+
+.user-row-number { width: 50px !important; }
+
+.username { width: auto !important; }
+
+.in-list { width: 50px !important; }
